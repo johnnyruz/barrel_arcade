@@ -1,0 +1,1 @@
+mode com4 baud=115200 parity=n data=8 stop=1 to=on xon=off odsr=off octs=off dtr=off rts=off idsr=off && echo "%1%" > com4
