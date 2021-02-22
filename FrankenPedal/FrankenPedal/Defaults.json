@@ -1,0 +1,7 @@
+﻿{
+  "ComPort": "COM10",
+  "BaudRate":  115200,
+  "LeftPedal": "LB",
+  "MiddlePedal": "MB",
+  "RightPedal": "RB"
+}
