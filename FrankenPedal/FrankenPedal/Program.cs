@@ -101,10 +101,10 @@ namespace FrankenPedal
                                    ControlMessage += $"3{defaults.RightPedal.ToControlChar()}";
                                }
 
-                               //port.Open();
-                               //port.WriteLine(ControlMessage);
-                               //port.Close();
-                               Console.WriteLine($"Would Write Out: {ControlMessage}");
+                               port.Open();
+                               port.WriteLine(ControlMessage);
+                               port.Close();
+                               //Console.WriteLine($"Would Write Out: {ControlMessage}");
                            }
                            else //User has not supplied the --defaults command line argument, mapping command line values
                            {
@@ -121,10 +121,10 @@ namespace FrankenPedal
                                {
                                    ControlMessage += $"3{o.Right.ToControlChar()}";
                                }
-                               //port.Open();
-                               //port.WriteLine(ControlMessage);
-                               //port.Close();
-                               Console.WriteLine($"Would Write Out: {ControlMessage}");                                 
+                               port.Open();
+                               port.WriteLine(ControlMessage);
+                               port.Close();
+                               //Console.WriteLine($"Would Write Out: {ControlMessage}");                                 
                            }
                        }
                        catch (Exception e)
@@ -138,6 +138,7 @@ namespace FrankenPedal
                                Console.WriteLine($"ERROR: {e.Message}");
                            }
                        }
+                       Console.WriteLine("Binding Successful!");
                    })
                    .WithNotParsed(errs => DisplayHelp(parserResult));
         }
