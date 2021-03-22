@@ -137,6 +137,7 @@ namespace FrankenPedal
                            {
                                Console.WriteLine($"ERROR: {e.Message}");
                            }
+                           System.Environment.Exit(1);
                        }
                        Console.WriteLine("Binding Successful!");
                    })
