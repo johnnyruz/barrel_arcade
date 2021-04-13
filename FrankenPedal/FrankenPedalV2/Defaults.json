@@ -1,0 +1,5 @@
+﻿{
+  "ComPort": "COM10",
+  "BaudRate": 115200,
+  "PedalBindings":  ["LB","MB","RB"]
+}
