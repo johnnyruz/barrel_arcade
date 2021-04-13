@@ -16,7 +16,9 @@ const int CEPin = A1;
 const int CSPin = A0;
 const int pedalPin [] = {pedalLeftPin, pedalMiddlePin, pedalRightPin};
 
-boolean currentPedalVal[3];
+const int PEDAL_COUNT = ( sizeof(pedalPin) / sizeof(int) );
+
+boolean currentPedalVal[PEDAL_COUNT];
 
 boolean isKeepAlive = false;
 long keepAliveTimer = 0;
@@ -25,10 +27,11 @@ RF24 radio(CEPin, CSPin);
 byte addresses[][6] = {"1Node", "2Node"};
 
 void setup() {
-  pinMode(pedalLeftPin, INPUT_PULLUP);
-  pinMode(pedalMiddlePin, INPUT_PULLUP);
-  pinMode(pedalRightPin, INPUT_PULLUP);
 
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    pinMode(pedalPin[i], INPUT_PULLUP);
+  }
+  
   pinMode(keepAlivePin, OUTPUT);
 
   if (DEBUG) {
@@ -58,9 +61,10 @@ void setup() {
 void loop() {
   long t = millis();
   byte data = 0x00;
-  data |= debounce(0) << 2;
-  data |= debounce(1) << 1;
-  data |= debounce(2); 
+
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    data |= debounce(i) << PEDAL_COUNT - (i + 1);
+  }
 
   // Ensure we have stopped listening (even if we're not) or we won't be able to transmit
   radio.stopListening(); 

@@ -20,15 +20,19 @@
 
 #define DEBUG false
 
+#define PEDAL_COUNT 3
+
 bool flipper_enabled = false;
 bool led_enabled = true;
 
-boolean currentPedalVal[3];
-char pedalFunction [] = {'~','!','@'};
+boolean currentPedalVal[PEDAL_COUNT];
+//char pedalFunction [] = {'~','!','@'};
+char pedalFunction[PEDAL_COUNT];
+bool pedalStatus[PEDAL_COUNT];
 
-bool leftIsPressed = false;
-bool rightIsPressed = false;
-bool middleIsPressed = false;
+//bool leftIsPressed = false;
+//bool rightIsPressed = false;
+//bool middleIsPressed = false;
 
 char currentlyMapping = '-';
 
@@ -122,7 +126,7 @@ void loop() {
       int i = 0;
       while (Serial.available()) {
         c = Serial.read();
-        if (i <= 2) {
+        if (i < PEDAL_COUNT) {
           pedalFunction[i] = c;
           EEPROM.update(i, c);
           Serial.print("Setting Button To: ");
@@ -158,6 +162,23 @@ void ack_flipper_cmd(bool isOn) {
 }
 
 void processPedalInput(byte data) {
+
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    bool isOn = bitRead(data, i);
+
+    if (isOn) {
+      if (!pedalStatus[i]) {
+        pedalStatus[i] = true;
+        pressPedal(i);
+      }
+    }
+    else if (pedalStatus[i]) {
+      pedalStatus[i] = false;
+      releasePedal(i);
+    }
+  }
+
+  /*
   bool left = bitRead(data, 2);
   bool middle = bitRead(data, 1);
   bool right = bitRead(data, 0);
@@ -194,6 +215,7 @@ void processPedalInput(byte data) {
     rightIsPressed = false;
     releasePedal(2);
   }  
+  */
 }
 
 void pressPedal(int pedal) {
@@ -231,6 +253,19 @@ void releasePedal(int pedal) {
 }
 
 void loadPedalBindings() {
+
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    char c = EEPROM.read(i);
+    if (byte(c) == byte(0xFF)) { //EEPROM never written, default to right mouse button
+      EEPROM.write(0, '@');
+      c = '@';
+    }
+    pedalFunction[i] = c;
+  }
+
+
+
+  /*
   char left = EEPROM.read(0);
   char middle = EEPROM.read(1);
   char right = EEPROM.read(2);
@@ -253,4 +288,5 @@ void loadPedalBindings() {
   pedalFunction[0] = left;
   pedalFunction[1] = middle;
   pedalFunction[2] = right;
+  */
 }
