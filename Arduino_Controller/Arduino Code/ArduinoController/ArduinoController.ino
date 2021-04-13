@@ -25,16 +25,9 @@
 bool flipper_enabled = false;
 bool led_enabled = true;
 
-boolean currentPedalVal[PEDAL_COUNT];
-//char pedalFunction [] = {'~','!','@'};
+bool currentPedalVal[PEDAL_COUNT];
 char pedalFunction[PEDAL_COUNT];
 bool pedalStatus[PEDAL_COUNT];
-
-//bool leftIsPressed = false;
-//bool rightIsPressed = false;
-//bool middleIsPressed = false;
-
-char currentlyMapping = '-';
 
 RF24 radio(CE_PIN, CS_PIN);
 byte addresses[][6] = {"1Node", "2Node"};
@@ -48,11 +41,15 @@ void setup() {
 
   pinMode(LEFT_FLIPPER_IN, INPUT_PULLUP);
   pinMode(RIGHT_FLIPPER_IN, INPUT_PULLUP);
+  
   pinMode(LEFT_FLIPPER_OUT, OUTPUT);
   pinMode(RIGHT_FLIPPER_OUT, OUTPUT);
+  digitalWrite(RIGHT_FLIPPER_OUT, HIGH);
+  digitalWrite(LEFT_FLIPPER_OUT, HIGH);
+  
   pinMode(LED_OUT, OUTPUT);
   pinMode(RADIO_STATUS_LED, OUTPUT);
-
+  
   loadPedalBindings();
   
   Serial.begin(115200);
@@ -123,16 +120,16 @@ void loop() {
 
     //CONFIGURE PEDAL FUNCTIONS
     if (c == '#') {
-      int i = 0;
+      int i = PEDAL_COUNT - 1;
       while (Serial.available()) {
         c = Serial.read();
-        if (i < PEDAL_COUNT) {
+        if (i >= 0) {
           pedalFunction[i] = c;
           EEPROM.update(i, c);
           Serial.print("Setting Button To: ");
           Serial.println(c);
         }
-        i++;
+        i--;
       }
     }
     // Toggle Flipper Function
@@ -163,7 +160,7 @@ void ack_flipper_cmd(bool isOn) {
 
 void processPedalInput(byte data) {
 
-  for (int i = 0; i < PEDAL_COUNT; i++) {
+  for (int i = PEDAL_COUNT - 1; i >= 0; i--) {
     bool isOn = bitRead(data, i);
 
     if (isOn) {
@@ -177,45 +174,6 @@ void processPedalInput(byte data) {
       releasePedal(i);
     }
   }
-
-  /*
-  bool left = bitRead(data, 2);
-  bool middle = bitRead(data, 1);
-  bool right = bitRead(data, 0);
-
-  if (left) {
-    if (!leftIsPressed) {
-      leftIsPressed = true;
-      pressPedal(0);
-    }
-  }
-  else if (leftIsPressed) {
-    leftIsPressed = false;
-    releasePedal(0);
-  }
-
-  if (middle) {
-    if (!middleIsPressed) {
-      middleIsPressed = true;
-      pressPedal(1);
-    }
-  }
-  else if (middleIsPressed) {
-    middleIsPressed = false;
-    releasePedal(1);
-  }
-
-  if (right) {
-    if (!rightIsPressed) {
-      rightIsPressed = true;
-      pressPedal(2);
-    }
-  }
-  else if (rightIsPressed) {
-    rightIsPressed = false;
-    releasePedal(2);
-  }  
-  */
 }
 
 void pressPedal(int pedal) {
@@ -254,7 +212,7 @@ void releasePedal(int pedal) {
 
 void loadPedalBindings() {
 
-  for (int i = 0; i < PEDAL_COUNT; i++) {
+  for (int i = PEDAL_COUNT-1; i >= 0; i--) {
     char c = EEPROM.read(i);
     if (byte(c) == byte(0xFF)) { //EEPROM never written, default to right mouse button
       EEPROM.write(0, '@');
@@ -262,31 +220,4 @@ void loadPedalBindings() {
     }
     pedalFunction[i] = c;
   }
-
-
-
-  /*
-  char left = EEPROM.read(0);
-  char middle = EEPROM.read(1);
-  char right = EEPROM.read(2);
-
-  if (byte(left) == byte(0xFF)) { //EEPROM never written, default to left mouse button
-    left = '~';
-    EEPROM.write(0, left);
-  }
-
-  if (byte(middle) == byte(0xFF)) { //EEPROM never written, default to left mouse button
-    middle = '!';
-    EEPROM.write(1, middle);
-  }
-
-  if (byte(right) == byte(0xFF)) { //EEPROM never written, default to left mouse button
-    right = '@';
-    EEPROM.write(2, right);
-  }
-
-  pedalFunction[0] = left;
-  pedalFunction[1] = middle;
-  pedalFunction[2] = right;
-  */
 }
