@@ -215,7 +215,7 @@ void loadPedalBindings() {
   for (int i = PEDAL_COUNT-1; i >= 0; i--) {
     char c = EEPROM.read(i);
     if (byte(c) == byte(0xFF)) { //EEPROM never written, default to right mouse button
-      EEPROM.write(0, '@');
+      EEPROM.write(i, '@');
       c = '@';
     }
     pedalFunction[i] = c;

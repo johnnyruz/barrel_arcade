@@ -3,24 +3,20 @@
 #include <EEPROM.h>
 
 const int pedalLeftPin = 2;
-const int pedalMiddlePin = A3;
-const int pedalRightPin = 3;
+const int pedalMiddlePin = 3;
+const int pedalRightPin = 4;
 const int pedalPin [] = {pedalLeftPin, pedalMiddlePin, pedalRightPin};
 
-boolean currentPedalVal[3];
-char pedalFunction [] = {'~','!','@'};
+const int PEDAL_COUNT = ( sizeof(pedalPin) / sizeof(int) );
 
-bool leftIsPressed = false;
-bool rightIsPressed = false;
-bool middleIsPressed = false;
-
-char currentlyMapping = '-';
+bool currentPedalVal[PEDAL_COUNT];
+char pedalFunction[PEDAL_COUNT];
+bool pedalStatus[PEDAL_COUNT];
 
 void setup() {
-  pinMode(pedalLeftPin, INPUT_PULLUP);
-  pinMode(pedalMiddlePin, INPUT_PULLUP);
-  pinMode(pedalRightPin, INPUT_PULLUP);
-
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    pinMode(pedalPin[i], INPUT_PULLUP);
+  }
   loadBindings();
 
   Serial.begin(115200);  
@@ -28,81 +24,40 @@ void setup() {
 
 void loop() {
 
-  // BUTTON PRESS LOGIC!
-  if (debounce(0)) // Left Pedal is physically pressed
-  {
-    if (!leftIsPressed) // If we have not already sent the DOWN event for this press 
-    {
-      //Serial.println("PRESS_LEFT");
-      leftIsPressed = true;
-      pressPedal(0);
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    bool isOn = debounce(i);
+    if (isOn) {
+      if (!pedalStatus[i]) {
+        pedalStatus[i] = true;
+        pressPedal(i);
+      }
     }
-  }
-  else if (leftIsPressed) // Left Pedal is physically released but we have not yet sent the UP event
-  { 
-    //Serial.println("RELEASE_LEFT");
-    leftIsPressed = false;
-    releasePedal(0);
-  }
-    
-  if (debounce(1)) // Middle Pedal is physically pressed
-  {
-    if (!middleIsPressed) // If we have not already sent the DOWN event for this press
-    {
-      //Serial.println("PRESS_MIDDLE");
-      middleIsPressed = true;
-      pressPedal(1);
+    else if (pedalStatus[i]) {
+      pedalStatus[i] = false;
+      releasePedal(i);
     }
-  }
-  else if (middleIsPressed) // Middle Pedal is physically released but we have not yet sent the UP event
-  {
-    //Serial.println("RELEASE_MIDDLE");
-    middleIsPressed = false;
-    releasePedal(1);
-  }
-
-  if (debounce(2)) // Right Pedal is physically pressed
-  {
-    if (!rightIsPressed) // If we have not already sent the DOWN event for this press
-    {
-      //Serial.println("PRESS_RIGHT");
-      rightIsPressed = true;
-      pressPedal(2);
-    }
-  }
-  else if (rightIsPressed) // Right Pedal is physically released but we have not yet sent the UP event
-  { 
-    //Serial.println("RELEASE_RIGHT");
-    rightIsPressed = false;
-    releasePedal(2);
   }
 
   // PEDAL CONFIGURATION LOGIC
+  // CONFIGURATION LOGIC
   if (Serial.available()) {
-      char c = Serial.read(); // Reads single character from serial input
-      if (currentlyMapping == '-' && ( c == '1' || c == '2' || c == '3' )) {
-        currentlyMapping = c;      
-      }
-      else {
-        switch (currentlyMapping) {
-          case '1':
-            pedalFunction[0] = c;
-            EEPROM.update(0, c);
-            break;
-          case '2':
-            pedalFunction[1] = c;
-            EEPROM.update(1, c);
-            break;
-          case '3':
-            pedalFunction[2] = c;
-            EEPROM.update(2, c);
-            break;
-          default:
-            break;          
+    char c = Serial.read();
+
+    //CONFIGURE PEDAL FUNCTIONS
+    if (c == '#') {
+      int i = 0;
+      while (Serial.available()) {
+        c = Serial.read();
+        if (i < PEDAL_COUNT) {
+          pedalFunction[i] = c;
+          EEPROM.update(i, c);
+          Serial.print("Setting Button To: ");
+          Serial.println(c);
         }
-        currentlyMapping = '-';
-      }      
-   }
+        i++;
+      }
+    }
+  }
 }
 
 boolean debounce(int thisPedal) {
@@ -150,26 +105,12 @@ void releasePedal(int pedal) {
 }
 
 void loadBindings() {
-  char left = EEPROM.read(0);
-  char middle = EEPROM.read(1);
-  char right = EEPROM.read(2);
-
-  if (byte(left) == byte(0xFF)) { // EEPROM never written, default to left mouse button
-    left = '~';
-    EEPROM.write(0, left);
+  for (int i = 0; i < PEDAL_COUNT; i++) {
+    char c = EEPROM.read(i);
+    if (byte(c) == byte(0xFF)) { //EEPROM never written, default to right mouse button
+      EEPROM.write(i, '@');
+      c = '@';
+    }
+    pedalFunction[i] = c;
   }
-
-  if (byte(middle) == byte(0xFF)) { // EEPROM never written, default to middle mouse button
-    middle = '!';
-    EEPROM.write(1, middle);
-  }
-
-  if (byte(right) == byte(0xFF)) { // EEPROM never written, default to right mouse button
-    right = '@';
-    EEPROM.write(2, right);
-  }
-
-  pedalFunction[0] = left;
-  pedalFunction[1] = middle;
-  pedalFunction[2] = right;
 }

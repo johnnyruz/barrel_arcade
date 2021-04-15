@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "FrakenPedal": {
-      "commandName": "Project",
-      "commandLineArgs": "-d"
-    }
-  }
-}

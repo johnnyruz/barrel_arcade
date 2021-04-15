@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Text.Json;
 
-namespace FrankenPedal
+namespace FrankenPedalV2
 {
     class Program
     {
@@ -21,18 +21,11 @@ namespace FrankenPedal
             [Option('d', "defaults", Required = false, HelpText = "Applies Default Bindings From Defaults.json file", SetName = "Default")]
             public bool Default { get; set; }
 
-            [Option('l', "left", Required = false, HelpText = "Set the character binding for the left pedal", SetName = "Manual")]
-            public string Left { get; set; }
-
-            [Option('m', "middle", Required = false, HelpText = "Set the character binding for the middle pedal", SetName = "Manual")]
-            public string Middle { get; set; }
-
-            [Option('r', "right", Required = false, HelpText = "Set the character binding for the right pedal", SetName = "Manual")]
-            public string Right { get; set; }
-
             [Option('v', "verbose", Required = false, Default = false, HelpText = "Show binding process information and errors.")]
             public bool Verbose { get; set; }
 
+            [Option('s', "set", Required = false, HelpText = "Set pedal bindings separated by commas", SetName = "Manual")]
+            public string PedalBindings { get; set; }
         }
 
         static void Main(string[] args)
@@ -45,7 +38,7 @@ namespace FrankenPedal
                    {
                        try
                        {
-                           if (!o.Default && !(o.Left?.Length > 0 || o.Middle?.Length > 0 || o.Right?.Length > 0))
+                           if (!o.Default && !(o.PedalBindings.Length > 0))
                            {
                                throw new Exception("No Binding Arguments Provided! Run with --help to see usage information.");
                            }
@@ -82,49 +75,37 @@ namespace FrankenPedal
 
                            if (o.Default) //User supplied the "defaults" command line argument
                            {
-                               if (defaults == null || !(defaults.LeftPedal?.Length > 0 || defaults.MiddlePedal?.Length > 0 || defaults.RightPedal?.Length > 0))
+                               if (defaults == null || !(defaults.PedalBindings?.Length > 0))
                                {
                                    throw new Exception("No Default Values found in Defaults.json");
                                }
 
-                               string ControlMessage = "";                               
-                               if (defaults.LeftPedal?.Length > 0)
+                               string ControlMessage = "#";
+                               foreach (var b in defaults.PedalBindings)
                                {
-                                   ControlMessage += $"1{defaults.LeftPedal.ToControlChar()}";
-                               }
-                               if (defaults.MiddlePedal?.Length > 0)
-                               {
-                                   ControlMessage += $"2{defaults.MiddlePedal.ToControlChar()}";
-                               }
-                               if (defaults.RightPedal?.Length > 0)
-                               {
-                                   ControlMessage += $"3{defaults.RightPedal.ToControlChar()}";
+                                   ControlMessage += $"{b.Trim().ToControlChar()}";
                                }
 
+                               //Console.WriteLine($"DEBUG: Would Write Out: {ControlMessage}");
                                port.Open();
                                port.WriteLine(ControlMessage);
                                port.Close();
-                               //Console.WriteLine($"Would Write Out: {ControlMessage}");
                            }
                            else //User has not supplied the --defaults command line argument, mapping command line values
                            {
-                               string ControlMessage = "";
-                               if (o.Left != null)
+                               var bindingArray = o.PedalBindings.Split(',');
+
+                               string ControlMessage = "#";
+                               foreach (var b in bindingArray)
                                {
-                                   ControlMessage += $"1{o.Left.ToControlChar()}";
+                                   ControlMessage += $"{b.Trim().ToControlChar()}";
                                }
-                               if (o.Middle != null)
-                               {
-                                   ControlMessage += $"2{o.Middle.ToControlChar()}";
-                               }
-                               if (o.Right != null)
-                               {
-                                   ControlMessage += $"3{o.Right.ToControlChar()}";
-                               }
+
+                               //Console.WriteLine($"DEBUG: Would Write Out: {ControlMessage}");
                                port.Open();
                                port.WriteLine(ControlMessage);
                                port.Close();
-                               //Console.WriteLine($"Would Write Out: {ControlMessage}");                                 
+
                            }
                        }
                        catch (Exception e)
@@ -149,31 +130,29 @@ namespace FrankenPedal
             var helpText = HelpText.AutoBuild(result, h =>
             {
                 h.AdditionalNewLineAfterOption = false;
-                h.Heading = "FrankenPedal v 0.1.0"; //change header
+                h.Heading = "FrankenPedal v 0.2.0"; //change header
                 h.AddPreOptionsLine("This application allows you to map keyboard " +
                     "and mouse inputs to the 3 pedals of an Infinity Pedal. This " +
                     "requires you to modify the pedal with an Arduino Leonardo microcontroller " +
-                    "flashed with my firmware.");
+                    "flashed with my wireless firmware.");
                 h.AddPreOptionsLine("");
                 h.AddPreOptionsLine("Reserved chars are:");
                 h.AddPreOptionsLine("  - '~' or LB (Left Mouse Click)");
                 h.AddPreOptionsLine("  - '!' or MB (Middle Mouse Click)");
                 h.AddPreOptionsLine("  - '@' or RB (Right Mouse Click).");
-                h.AddPreOptionsLine("\nExample - Set left to 'a', middle to left mouse, right to right mouse:\nFrankenPedal.exe -p COM4 -b 9600 -l a -m LB -r '@'");
-                h.AddPreOptionsLine("\nExample - Apply defaults from Defaults.json\nFrankenPedal.exe -p COM4 -d");
+                h.AddPreOptionsLine("\nExample - Set left to 'a', middle to left mouse, right to right mouse:\nFrankenPedalV2.exe -p COM4 -b 115200 -l a -m LB -r '@'");
+                h.AddPreOptionsLine("\nExample - Apply defaults from Defaults.json\nFrankenPedalV2.exe -p COM4 -d");
                 return HelpText.DefaultParsingErrorsHandler(result, h);
             }, e => e);
             Console.WriteLine(helpText);
-        }        
+        }
     }
 
     public class PedalDefaults
     {
         public string ComPort { get; set; }
         public int BaudRate { get; set; }
-        public string LeftPedal { get; set; }
-        public string MiddlePedal { get; set; }
-        public string RightPedal { get; set; }
+        public string[] PedalBindings { get; set; }
     }
 
     public static class ControlExtensions
