@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Text.Json;
 
-namespace FrankenPedalV2
+namespace FrankenPedal
 {
     class Program
     {
@@ -38,7 +38,7 @@ namespace FrankenPedalV2
                    {
                        try
                        {
-                           if (!o.Default && !(o.PedalBindings.Length > 0))
+                           if (!o.Default && !(o.PedalBindings?.Length > 0))
                            {
                                throw new Exception("No Binding Arguments Provided! Run with --help to see usage information.");
                            }
@@ -132,16 +132,15 @@ namespace FrankenPedalV2
                 h.AdditionalNewLineAfterOption = false;
                 h.Heading = "FrankenPedal v 0.2.0"; //change header
                 h.AddPreOptionsLine("This application allows you to map keyboard " +
-                    "and mouse inputs to the 3 pedals of an Infinity Pedal. This " +
-                    "requires you to modify the pedal with an Arduino Leonardo microcontroller " +
-                    "flashed with my wireless firmware.");
+                    "and mouse inputs to any pedal using an Arduino and flashed with " +
+                    "the FrankenPedal firmware.");
                 h.AddPreOptionsLine("");
                 h.AddPreOptionsLine("Reserved chars are:");
                 h.AddPreOptionsLine("  - '~' or LB (Left Mouse Click)");
                 h.AddPreOptionsLine("  - '!' or MB (Middle Mouse Click)");
                 h.AddPreOptionsLine("  - '@' or RB (Right Mouse Click).");
-                h.AddPreOptionsLine("\nExample - Set left to 'a', middle to left mouse, right to right mouse:\nFrankenPedalV2.exe -p COM4 -b 115200 -l a -m LB -r '@'");
-                h.AddPreOptionsLine("\nExample - Apply defaults from Defaults.json\nFrankenPedalV2.exe -p COM4 -d");
+                h.AddPreOptionsLine("\nExample - Set left to 'a', middle to left mouse, right to right mouse:\nFrankenPedal.exe -p COM4 -b 115200 -s a,LB,RB");
+                h.AddPreOptionsLine("\nExample - Apply defaults from Defaults.json\nFrankenPedal.exe -p COM4 -d");
                 return HelpText.DefaultParsingErrorsHandler(result, h);
             }, e => e);
             Console.WriteLine(helpText);
